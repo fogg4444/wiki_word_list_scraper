@@ -1,14 +1,6 @@
-console.log('WORD LISTS');
-
 var cheerio = require('cheerio');
 var request = require('request');
 var fs = require('fs')
-
-// const cheerio = require('cheerio')
-// const $ = cheerio.load('<h2 class="title">Hello world</h2>')
-//
-// $('h2.title').text('Hello there!')
-// $('h2').addClass('welcome')
 
 let resultsFileLocation = './results/results.csv'
 
@@ -51,7 +43,7 @@ let processEachListElem = (listElem) => {
     return null
   }
 
-  console.log('firstChild', title);
+  // console.log('firstChild', title);
 
   // let listElemChildren = listElem.children()
 
@@ -78,8 +70,7 @@ let getFormattedWordsFromPage = (body) => {
 
     allListElements.each((i, eachElem) => {
       let eachProcessedListItem = processEachListElem(eachElem)
-
-      console.log('eachProcessedListItem', eachProcessedListItem);
+      // console.log('eachProcessedListItem', eachProcessedListItem);
       if(eachProcessedListItem) {
         let formattedLine = eachProcessedListItem.name + ',' + eachProcessedListItem.type + ',' + eachProcessedListItem.symbol + '\n'
         writeLineToFile(formattedLine)
@@ -92,6 +83,7 @@ let getFormattedWordsFromPage = (body) => {
 
 let writeForEachLetter = (letter) => {
   return new Promise((resolve, reject) => {
+    console.log('Parsing ', letter);
     let url = baseUrl + letter
     getBodyByUrl(url)
     .then((body) => {
@@ -105,9 +97,8 @@ let writeForEachLetter = (letter) => {
 
 let promiseList = []
 
+clearResultsFile()
 alphabet.forEach((elem, i) => {
-  console.log('elem', elem);
-
   promiseList.push(() => {
     return writeForEachLetter(elem)
   })
