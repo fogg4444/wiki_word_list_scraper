@@ -28,7 +28,19 @@ let getBodyByUrl = (url) => {
   })
 }
 
+
+let processTitleSpan = (elem) => {
+  return processTitleATag(elem.children[0])
+  // TODO: remove (does not exist) from title
+}
+
+let processTitleATag = (elem) => {
+  // console.log('Process tag');
+  return elem.attribs.title
+}
+
 let processEachListElem = (listElem) => {
+  console.log('-------------------------------------------------------------------');
   // console.log('listElem', listElem.children);
 
   // TODO: improve this whole function
@@ -36,39 +48,36 @@ let processEachListElem = (listElem) => {
 
   let firstChild = listElem.children[0]
 
-
-  // check that it is indeed a tag
-  if(firstChild.type !== 'tag') {
-    return null
+  console.log(firstChild);
+  
+  let processedResult = {
+    name: '',
+    type: '- - -',
+    symbol: '- - -'
   }
 
+  if(firstChild.name === 'span') {
+    //  handle partyly new
+    processedResult.name = processTitleSpan(firstChild)
+  } else {
+    processedResult.name = processTitleATag(firstChild)
+  }
+  
+  // if(firstChild.name === 'span') {
+  // } else if(firstChild.name === 'a') {
+  //   processedResult.name = processTitleSpan(listElem)
+  // }
 
-  let title = firstChild.attribs.title
-
-  if(title === undefined) {
-    return null
+  if(processedResult.name === undefined) {
+    console.log('0---', listElem);
   }
 
-  // console.log('firstChild', title);
-
-  // let listElemChildren = listElem.children()
-
-  //
-  // listElemChildren.each((i, elem) => {
-  //   console.log('Each child elem', elem);
-  // })
-
-  return {
-    name: title || '---',
-    type: '---',
-    symbol: '---'
-  }
+  console.log('-------------------------------------------------------------------');
+  return processedResult
 }
 
 let writeLineToFile = (line, language) => {
   let formattedFileToWrite = resultsFileLocation + '/' + language + '_' + resultsFileName
-  
-  console.log('-------', formattedFileToWrite);
   fs.appendFileSync(formattedFileToWrite, line)
 }
 
@@ -79,7 +88,7 @@ let getFormattedWordsFromPage = (body, language) => {
 
     allListElements.each((i, eachElem) => {
       let eachProcessedListItem = processEachListElem(eachElem)
-      console.log('eachProcessedListItem', eachProcessedListItem);
+      // console.log('eachProcessedListItem', eachProcessedListItem);
       if(eachProcessedListItem) {
         let formattedLine = eachProcessedListItem.name + ',' + eachProcessedListItem.type + ',' + eachProcessedListItem.symbol + '\n'
         writeLineToFile(formattedLine, language)
@@ -92,7 +101,7 @@ let getFormattedWordsFromPage = (body, language) => {
 
 let writeForEachLetter = (letter, language) => {
   return new Promise((resolve, reject) => {
-    console.log('Parsing ', letter);
+    console.log('Parsing ' + language + ' ' + letter);
     let url = baseUrl + ':' + language + '/' + letter
     console.log(' url', url);
     getBodyByUrl(url)
@@ -131,3 +140,4 @@ let getAllWordsForLanguage = (language) => {
 
 clearResultsFile()
 getAllWordsForLanguage('French')
+// getAllWordsForLanguage('German')
