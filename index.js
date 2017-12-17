@@ -2,13 +2,19 @@ var cheerio = require('cheerio');
 var request = require('request');
 var fs = require('fs')
 
-let resultsFileLocation = './results/results.csv'
+let resultsFileLocation = './results'
+let resultsFileName = 'results.csv'
 
-let baseUrl = 'https://en.wiktionary.org/wiki/Index:French/'
+let baseUrl = 'https://en.wiktionary.org/wiki/Index'
 let alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+let languageList = ['French', 'Italian', 'German']
+
 
 let clearResultsFile = () => {
-  fs.writeFileSync(resultsFileLocation, '')
+  languageList.forEach((languageFromList, i) => {
+    let thisFile = resultsFileLocation + '/' + languageFromList + '_' + resultsFileName
+    fs.writeFileSync(thisFile, '')
+  })
 }
 
 let getBodyByUrl = (url) => {
@@ -59,21 +65,24 @@ let processEachListElem = (listElem) => {
   }
 }
 
-let writeLineToFile = (line) => {
-  fs.appendFileSync(resultsFileLocation, line)
+let writeLineToFile = (line, language) => {
+  let formattedFileToWrite = resultsFileLocation + '/' + language + '_' + resultsFileName
+  
+  console.log('-------', formattedFileToWrite);
+  fs.appendFileSync(formattedFileToWrite, line)
 }
 
-let getFormattedWordsFromPage = (body) => {
+let getFormattedWordsFromPage = (body, language) => {
   return new Promise((resolve, reject) => {
     let $ = cheerio.load(body);
     let allListElements = $('.index').children('ol').children('li')
 
     allListElements.each((i, eachElem) => {
       let eachProcessedListItem = processEachListElem(eachElem)
-      // console.log('eachProcessedListItem', eachProcessedListItem);
+      console.log('eachProcessedListItem', eachProcessedListItem);
       if(eachProcessedListItem) {
         let formattedLine = eachProcessedListItem.name + ',' + eachProcessedListItem.type + ',' + eachProcessedListItem.symbol + '\n'
-        writeLineToFile(formattedLine)
+        writeLineToFile(formattedLine, language)
       }
     })
     resolve()
@@ -81,28 +90,20 @@ let getFormattedWordsFromPage = (body) => {
 }
 
 
-let writeForEachLetter = (letter) => {
+let writeForEachLetter = (letter, language) => {
   return new Promise((resolve, reject) => {
     console.log('Parsing ', letter);
-    let url = baseUrl + letter
+    let url = baseUrl + ':' + language + '/' + letter
+    console.log(' url', url);
     getBodyByUrl(url)
     .then((body) => {
-      return getFormattedWordsFromPage(body)
+      return getFormattedWordsFromPage(body, language)
     })
     .then(() => {
       resolve()
     })
   })
 }
-
-let promiseList = []
-
-clearResultsFile()
-alphabet.forEach((elem, i) => {
-  promiseList.push(() => {
-    return writeForEachLetter(elem)
-  })
-})
 
 
 const promiseSerial = funcs =>
@@ -111,6 +112,22 @@ const promiseSerial = funcs =>
     Promise.resolve([]))
 
 
-promiseSerial(promiseList)
-  .then(() => { console.log('then') })
-  .catch((err) => { console.log('err') })
+
+let getAllWordsForLanguage = (language) => {
+  let promiseList = []
+
+  alphabet.forEach((elem, i) => {
+    promiseList.push(() => {
+      return writeForEachLetter(elem, language)
+    })
+  })
+  
+  promiseSerial(promiseList)
+    .then(() => { console.log('then') })
+    .catch((err) => { console.log('err') })
+}
+
+
+
+clearResultsFile()
+getAllWordsForLanguage('French')
