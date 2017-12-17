@@ -2,13 +2,12 @@ var cheerio = require('cheerio');
 var request = require('request');
 var fs = require('fs')
 
+
+let languageList = ['French', 'Italian', 'German']
 let resultsFileLocation = './results'
 let resultsFileName = 'results.csv'
-
 let baseUrl = 'https://en.wiktionary.org/wiki/Index'
 let alphabet = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-let languageList = ['French', 'Italian', 'German']
-
 
 let clearResultsFile = () => {
   languageList.forEach((languageFromList, i) => {
@@ -39,21 +38,27 @@ let processTitleATag = (elem) => {
   return elem.attribs.title
 }
 
-let processEachListElem = (listElem) => {
-  console.log('-------------------------------------------------------------------');
-  // console.log('listElem', listElem.children);
+let findITagDataInElem = (listelem) => {
+  // console.log('each listelem', listelem.children);
+  let result = ''
+  listelem.children.every((elem, i) => {
+    if(elem.name === 'i') {
+      result = elem.children[0].data
+      return false
+    }
+    return true
+  })
+  return result
+}
 
-  // TODO: improve this whole function
-  // Not really handling spans well here
+let processEachListElem = (listElem) => {
+  // console.log('-------------------------------------------------------------------');
 
   let firstChild = listElem.children[0]
 
-  console.log(firstChild);
-  
   let processedResult = {
     name: '',
-    type: '- - -',
-    symbol: '- - -'
+    type: ''
   }
 
   if(firstChild.name === 'span') {
@@ -62,17 +67,10 @@ let processEachListElem = (listElem) => {
   } else {
     processedResult.name = processTitleATag(firstChild)
   }
-  
-  // if(firstChild.name === 'span') {
-  // } else if(firstChild.name === 'a') {
-  //   processedResult.name = processTitleSpan(listElem)
-  // }
 
-  if(processedResult.name === undefined) {
-    console.log('0---', listElem);
-  }
+  processedResult.type = findITagDataInElem(listElem)
 
-  console.log('-------------------------------------------------------------------');
+  // console.log('-------------------------------------------------------------------');
   return processedResult
 }
 
@@ -90,7 +88,7 @@ let getFormattedWordsFromPage = (body, language) => {
       let eachProcessedListItem = processEachListElem(eachElem)
       // console.log('eachProcessedListItem', eachProcessedListItem);
       if(eachProcessedListItem) {
-        let formattedLine = eachProcessedListItem.name + ',' + eachProcessedListItem.type + ',' + eachProcessedListItem.symbol + '\n'
+        let formattedLine = eachProcessedListItem.name + ',' + eachProcessedListItem.type + '\n'
         writeLineToFile(formattedLine, language)
       }
     })
@@ -130,7 +128,7 @@ let getAllWordsForLanguage = (language) => {
       return writeForEachLetter(elem, language)
     })
   })
-  
+
   promiseSerial(promiseList)
     .then(() => { console.log('then') })
     .catch((err) => { console.log('err') })
@@ -139,5 +137,7 @@ let getAllWordsForLanguage = (language) => {
 
 
 clearResultsFile()
-getAllWordsForLanguage('French')
-// getAllWordsForLanguage('German')
+
+languageList.forEach((lang, i) => {
+  getAllWordsForLanguage(lang)
+})
