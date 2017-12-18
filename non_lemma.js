@@ -8,7 +8,7 @@ let domain = 'https://en.wiktionary.org'
 let baseUrl = domain + '/w/index.php?title=Category:French_non-lemma_forms'
 
 
-let languageList = ['French', 'Italian', 'German']
+let languageList = ['French', 'Italian', 'German', 'Latin']
 let resultsFileLocation = './non_lemma_results'
 let resultsFileName = 'non_lemma_results.csv'
 
@@ -82,7 +82,7 @@ let writeListElemsToFile = (listElems, lang) => {
 }
 
 let getAllElementsFromAllPages = (url, language) => {
-  recursive
+  // recursive
   let recursiveGetPage = (url) => {
     getBodyByUrl(url, (body) => {
       getListElemsAndNextLink(body, language, (res) => {

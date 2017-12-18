@@ -7,13 +7,13 @@ from this folder:
 `npm start`
 
 
-Results should be printed in ./results folder
-
+Standard word list results should be printed in ./results folder
 
 ====
 
 non-lemma results
 
-`node non_lemma.js`
+`npm run start_lemma`
 
-Results should be printed in ./non_lemma_results folder
+
+Non lemma results should be printed in ./non_lemma_results folder
