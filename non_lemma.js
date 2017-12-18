@@ -23,9 +23,6 @@ let clearResultsFile = () => {
   })
 }
 
-clearResultsFile()
-
-
 let getBodyByUrl = (url, callback) => {
   request(url, (err, res, body) => {
     if(err) {
@@ -36,11 +33,8 @@ let getBodyByUrl = (url, callback) => {
 }
 
 let checkIfLinkIsValidNext = (link) => {
-  // console.log('Link to check', link);
   let result = false
   if('children' in link) {
-
-    // console.log('FOund children', link.children[0].data);
     let firstChildData = link.children[0].data
     if(firstChildData === 'previous page') {
       result = false
@@ -48,9 +42,6 @@ let checkIfLinkIsValidNext = (link) => {
       result = true
     }
   }
-
-  // && selectedLink.children[0].data === 'next page'
-
   return result
 }
 
@@ -58,24 +49,17 @@ let checkIfLinkIsValidNext = (link) => {
 let getListElemsAndNextLink = (body, language, callback) => {
     let $ = cheerio.load(body);
     let nextLinkContainer = $('#mw-pages').children()
-
     let selectedLink = nextLinkContainer[nextLinkContainer.length - 1]
-
     let lastChildLink = ''
     if(checkIfLinkIsValidNext(selectedLink)) {
       // selectedLink.children[0].data === 'next page'
       lastChildLink = selectedLink.attribs.href
       // console.log('Selected link', lastChildLink);
     }
-
-    // console.log('==== lastChildLink', lastChildLink);
-
     let formattedNextLink = null
-
     if(lastChildLink.length > 0) {
-        formattedNextLink = domain + lastChildLink
+      formattedNextLink = domain + lastChildLink
     }
-
     let results = {
       nextLink: formattedNextLink,
       allListElems: $('.mw-category-group').find('li')
@@ -98,28 +82,36 @@ let writeListElemsToFile = (listElems, lang) => {
 }
 
 let getAllElementsFromAllPages = (url, language) => {
-
-    let recursiveGetPage = (url) => {
-      getBodyByUrl(url, (body) => {
-        getListElemsAndNextLink(body, language, (res) => {
-          writeListElemsToFile(res.allListElems, language)
-          console.log('Has finished writing page', res.nextLink);
-          if(res.nextLink) {
-            recursiveGetPage(res.nextLink)
-          } else {
-            return null
-          }
-        })
+  recursive
+  let recursiveGetPage = (url) => {
+    getBodyByUrl(url, (body) => {
+      getListElemsAndNextLink(body, language, (res) => {
+        writeListElemsToFile(res.allListElems, language)
+        console.log('Has finished writing page', res.nextLink);
+        if(res.nextLink) {
+          recursiveGetPage(res.nextLink)
+        } else {
+          return null
+        }
       })
-    }
-    recursiveGetPage(url)
+    })
+  }
+  recursiveGetPage(url)
 }
 
 
-let testUrl = 'https://en.wiktionary.org/w/index.php?title=Category:Italian_non-lemma_forms&pagefrom=ZUMERANNO%0Azumeranno#mw-pages'
 
+//////////////////////////////////////
+// Start doing things here
+//
+
+clearResultsFile()
+
+////////////////////////////////////////////////////////
+// Using this to test things
+// let testUrl = 'https://en.wiktionary.org/w/index.php?title=Category:Italian_non-lemma_forms&pagefrom=ZUMERANNO%0Azumeranno#mw-pages'
 // getAllElementsFromAllPages(testUrl, 'Italian')
-
+////////////////////////////////////////////////////////
 
 languageList.forEach((lang, i) => {
   let startUrl = getBaseUrlByLang(lang)
